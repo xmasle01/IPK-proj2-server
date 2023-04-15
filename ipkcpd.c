@@ -99,6 +99,16 @@ int bind(int port, int Socket)
 
 }
 
+void listen()
+{
+    int max_waiting_connections = 1;
+    if (listen(welcome_socket, max_waiting_connections) < 0)
+    {
+        perror("ERROR: listen");
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char * argv[])
 {
     check_args(int argc, char * argv[]);
