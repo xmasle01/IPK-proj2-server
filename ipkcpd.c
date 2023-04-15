@@ -48,6 +48,27 @@ bool check_args(int argc, const char * argv[])
     }
 }
 
+int bind(int port, int Socket)
+{
+    unsigned short server_port = port;
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(port_number);
+
+    struct sockaddr *address = (struct sockaddr *) &server_addr;
+    int address_size = sizeof(server_addr);
+    
+    if (bind(Socket, &address, address_size) < 0)
+    {
+        perror("ERROR: bind");
+        exit(EXIT_FAILURE);
+    }
+
+}
+
 int main(int argc, char * argv[])
 {
     check_args(int argc, char * argv[]);
