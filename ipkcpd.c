@@ -48,6 +48,36 @@ bool check_args(int argc, const char * argv[])
     }
 }
 
+int create_socket(char* mode)
+{
+    if(!strcmp(mode, "tcp"))
+    {
+        int family = AF_INET;
+        int type = SOCK_STREAM;
+        int welcome_socket = socket(family, type, 0);
+        if (welcome_socket <= 0)
+        {
+            perror("ERROR: socket");
+            exit(EXIT_FAILURE);
+        }
+        int enable = 1;
+        setsockopt(welcome_socket, SOL_SOCKET, SO_REUSEADDR,
+        &enable, sizeof(enable));
+        return welcome_socket;
+
+    }else if(!strcmp(mode, "udp"))
+    {
+        int server_socket = socket(AF_INET, SOCK_DGRAM, 0);
+        if (server_socket <= 0)
+        {
+            perror("ERROR: socket");
+            exit(EXIT_FAILURE);
+        }
+        return server_socket;
+    }
+    
+}
+
 int bind(int port, int Socket)
 {
     unsigned short server_port = port;
