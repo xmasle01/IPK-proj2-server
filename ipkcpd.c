@@ -17,6 +17,35 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+void send_err(char* mode, int flags)
+{
+    if(!strcmp(mode, "tcp"))
+    {
+        send(comm_socket, bye, strlen(bye), flags);
+        perror("UNEXPECTED HAPPEND:");
+        shutdown(comm_socket, SHUT_RDWR);
+        close(comm_socket);
+
+    }else if(!strcmp(mode, "udp"))
+    {
+        const char* payload_data = "Could not parse the message!";
+        //int message_length = SEND_BYTE_ARR + strlen(payload_data);
+
+        sendbuffer[0] = OPCODE;
+        sendbuffer[1] = STATUS_CODE_ERROR;
+        sendbuffer[2] = strlen(payload_data);
+        //strcpy(sendbuffer[3], payload_data);
+        strcat(sendbuffer+3,payload_data);
+        perror("preco som tu?");
+        int bytes_tx = sendto(Socket, sendbuffer, strlen(sendbuffer), 0, addr, addr_size);
+        //close(Socket);
+        // skopírujeme payload data do správy
+        //memcpy(&message[4], payload_data, strlen(payload_data));
+
+        //sprintf(output, "OK:%d\n", result);
+    }
+}
+
 bool valid_expr(char* expr)
 {
     int brcnt = 0;
