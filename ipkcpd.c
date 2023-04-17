@@ -1,4 +1,4 @@
-//* 
+/* 
  * Projekt 2: Server na komunikaciu s klientom pre VUT FIT predmet IPK
  * Autor: Juraj Nikola Mašlej, xmasle01@vubr.cz
  * 2022/2023
@@ -356,8 +356,6 @@ void RecvSendTCP(int welcome_socket, char* mode, int flags,struct sockaddr_in co
     perror("socket je ");
     while(1)
     {
-        //signal(SIGINT, controlC);
-
         comm_socket = accept(welcome_socket, (struct sockaddr *) &comm_addr, &comm_addr_size);
         perror("socket je ");
         if (comm_socket < 0)
