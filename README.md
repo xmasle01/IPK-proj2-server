@@ -57,3 +57,39 @@ Argumenty funkcie
 - `port` -  celé číslo, ktoré určuje port, na ktorom bude socket naviazaný.
 - `Socket` - celé číslo, ktoré reprezentuje vytvorený socket.
 - `server_addr` - štruktúra, ktorá obsahuje informácie o serverovej adrese.
+
+
+Funkcia začína vytvorením premennej server_port, do ktorej sa uloží číslo portu. Následne sa premazanie celého obsahu štruktúry server_addr, aby nebol v nej žiadny náhodný obsah.
+
+Do štruktúry server_addr sa následne priradia hodnoty, ktoré sú potrebné pre naviazanie adresy a portu na soket:
+
+- `sin_family` - typ adresy, v tomto prípade IPv4 (konkrétne hodnota AF_INET)
+- `sin_addr.s_addr` - sieťová adresa, na ktorej má soket počúvať prichádzajúce spojenia (v tomto prípade sa použije adresa INADDR_ANY, ktorá značí, že soket počúva na všetkých dostupných sieťových rozhraniach)
+- `sin_port` - číslo portu, na ktorom má soket počúvať prichádzajúce spojenia (hodnota tejto premennej sa nastaví na htons(port), aby sa zabezpečila správna konverzia z host-byte order na network-byte order)
+
+Následne sa vytvorí smerník na štruktúru sockaddr, ktorým sa inicializuje premenná address, a do premennej address_size sa uloží veľkosť štruktúry server_addr. Týmto sa zabezpečí správne pretypovanie adresy štruktúry server_addr na adresu štruktúry sockaddr, ktorá sa používa pre funkciu bind().
+
+Nakoniec sa pomocou funkcie bind() naviaže adresa a port na soket. Ak táto operácia skončí s chybou, funkcia vypíše chybovú správu pomocou funkcie perror() a program sa ukončí s chybovým kódom EXIT_FAILURE.
+
+#####Návratová hodnota
+Funkcia binding() nevracia žiadnu hodnotu. Adresa a port sú naviazané na soket, ale nie je potrebné získať žiadnu
+
+####Funkcia "handle_client" 
+Je funkcia, ktorá sa stará o obsluhu klientov v TCP alebo UDP režime. Na začiatku funkcie sa nastaví pomocná premenná "helb" na hodnotu false, čo znamená, že klient ešte nezavolal príkaz "HELLO". Následne sa inicializuje buffer, ktorý bude slúžiť na príjem dát od klienta.
+
+Následuje cyklus while, ktorý beží neustále, pokiaľ klient neukončí spojenie. V každej iterácii cyklu sa buffer vynuluje pomocou funkcie "memset", aby sa zabránilo pretečeniu bufferu. Následne sa použije funkcia "recv", ktorá prijme dáta od klienta a uloží ich do bufferu. Ak sa nepodarí prijať dáta od klienta (recv vráti hodnotu menšiu alebo rovnú 0), spojenie sa ukončí a server pošle chybovú správu pomocou funkcie "send_err".
+
+Ak sa podarilo prijať dáta od klienta, tak sa vypíše prijatá správa na stdout. Následne sa použije funkcia "strtok", ktorá rozdelí prijaté dáta na slová na základe medzier a znakov nového riadku. Následne sa kontroluje, či server pracuje v TCP režime. Ak áno, tak sa použije podmienka "if", ktorá kontroluje, či klient poslal príkaz "HELLO". Ak áno, tak server pošle klientovi uvítaciu správu. Ak klient poslal príkaz "SOLVE", tak sa zistí výraz, ktorý chce klient vyriešiť, pomocou funkcie "calculate". Výsledok sa uloží do premennej "result" a server pošle klientovi odpoveď s výsledkom. Ak klient poslal príkaz "BYE", tak sa ukončí spojenie a server pošle klientovi správu "BYE". Ak klient poslal neznámy príkaz, tak sa pošle klientovi chybová správa pomocou funkcie "send_err" a cyklus sa ukončí.
+
+Celkovo funkcia "handle_client" slúži na spracovanie príkazov od klienta v TCP alebo UDP režime. Akýkoľvek príkaz od klienta, ktorý nie je rozpoznaný, spôsobí ukončenie spojenia a odoslanie chybovej správy. Funkcia "handle_client" teda predstavuje jadro serverovej kalkulačky pre TCP a UDP komunikáciu, ktorá dokáže spracovať a vyriešiť matematické výrazy.
+
+##TESTY
+![TCP-TEST](tcp-hello-miss.png)
+Testovanie zlého vstupu
+
+![UDP-TEST](test-plus.png)
+Test pre UDP či funguje sčitovanie
+
+![TCP-TEST](tcp-hello.png)
+TEstovanie, že je potrebne najprv napísať HELLO
+

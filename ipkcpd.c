@@ -254,7 +254,7 @@ void handle_client(int comm_socket, char* mode, int flags)
                 char* expr = buffer + 6;
                 int result = calculate(expr);
                 char output[50];
-                sprintf(output, "RESULT %d\n", result);
+                sprintf(output, "%d\n", result);
                 send(comm_socket, output, strlen(output), flags);
             }
             else if (strcmp(pch, "BYE") == 0)
