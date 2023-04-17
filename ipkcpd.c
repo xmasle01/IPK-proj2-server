@@ -29,20 +29,16 @@ void send_err(char* mode, int flags)
     }else if(!strcmp(mode, "udp"))
     {
         const char* payload_data = "Could not parse the message!";
-        //int message_length = SEND_BYTE_ARR + strlen(payload_data);
+
 
         sendbuffer[0] = OPCODE;
         sendbuffer[1] = STATUS_CODE_ERROR;
         sendbuffer[2] = strlen(payload_data);
-        //strcpy(sendbuffer[3], payload_data);
+
         strcat(sendbuffer+3,payload_data);
         perror("preco som tu?");
         int bytes_tx = sendto(Socket, sendbuffer, strlen(sendbuffer), 0, addr, addr_size);
-        //close(Socket);
-        // skopírujeme payload data do správy
-        //memcpy(&message[4], payload_data, strlen(payload_data));
-
-        //sprintf(output, "OK:%d\n", result);
+       
     }
 }
 
@@ -179,25 +175,89 @@ int create_socket(char* mode, int flags)
     }
 }
 
-int bind(int port, int Socket)
+void binding(int port, int Socket,struct sockaddr_in server_addr)
 {
     unsigned short server_port = port;
-    struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = htons(port_number);
+    server_addr.sin_port = htons(port);
 
     struct sockaddr *address = (struct sockaddr *) &server_addr;
     int address_size = sizeof(server_addr);
-    
-    if (bind(Socket, &address, address_size) < 0)
+
+    if (bind(Socket, address, address_size) < 0)
     {
         perror("ERROR: bind");
         exit(EXIT_FAILURE);
     }
 
+}
+
+void handle_client(int comm_socket, char* mode, int flags)
+{
+    bool helb = false;
+    printf("Started client handling\n");
+    char buffer[BUFFER_SIZE];
+    while(1)
+    {
+        memset(buffer,'\0',BUFFER_SIZE);
+        int bytes_rx = recv(comm_socket, buffer, BUFFER_SIZE, flags);
+        if (bytes_rx <= 0) 
+        {
+            send_err(mode, flags );
+            break;
+        }
+        // Handle received message
+        printf("Received message: %s\n", buffer);
+        char* pch = strtok(buffer, " ");
+        strtok(pch, "\n");
+
+        printf("pch: %s*", pch);
+        if(!strcmp(mode, "tcp"))
+        {
+            //printf("%s", pch);
+            if (strcmp(pch, "HELLO") == 0)
+            {
+                helb = true;
+                send(comm_socket, hello, strlen(hello), flags);
+            }
+            else if (!strcmp(pch, "SOLVE"))
+            {
+                if(helb == false)
+                {
+                    send_err(mode, flags);
+                }
+                char* expr = buffer + 6;
+                int result = calculate(expr);
+                char output[50];
+                sprintf(output, "RESULT %d\n", result);
+                send(comm_socket, output, strlen(output), flags);
+            }
+            else if (strcmp(pch, "BYE") == 0)
+            {
+                if(helb == false)
+                {
+                    send_err(mode, flags);
+                }
+                send(comm_socket, bye, strlen(bye), flags);
+                break;
+            }
+            else
+            {
+                const char* msg = "INVALID COMMAND\n";
+                //send(comm_socket, pch, strlen(pch), flags);
+                perror("UNEXPECTED HAPPEND:");
+                send_err(mode, flags);
+                break;
+            }
+           
+        }
+    }
+
+    shutdown(comm_socket, SHUT_RDWR);
+    close(comm_socket);
 }
 
 void listen()
