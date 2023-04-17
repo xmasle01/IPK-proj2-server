@@ -260,6 +260,59 @@ void handle_client(int comm_socket, char* mode, int flags)
     close(comm_socket);
 }
 
+void RecvSendUDP(int Socket, char* mode, int flags)
+{
+    while(1)
+    {
+        memset(recvbuffer,'\0',strlen(recvbuffer));
+        int bytes_rx = recvfrom(Socket, recvbuffer, BUFFER_SIZE, 0, addr, &addr_size);
+        if (bytes_rx < 0) 
+        {
+            perror("ERROR: recvfrom");
+            send_err(mode, flags);
+        }
+        if(recvbuffer[0] != 0)
+        {
+            int bytes_tx = sendto(Socket, sendbuffer, strlen(sendbuffer), 0, addr, addr_size);
+            if (bytes_tx < 0) 
+            {
+                perror("ERROR: sendto");
+                send_err(mode, flags);
+                memset(sendbuffer,'\0',strlen(sendbuffer));
+            }
+        }
+        else
+        {
+            perror("435:");
+            char* mess = recvbuffer;
+            char* expr = &mess[2];
+            perror("442:");
+            char* result = (char*)malloc(10 * sizeof(char));
+            memset(result,'\0',strlen(result));
+
+            sprintf(result,"%d", calculate(expr));
+
+            perror("450:");
+            memset(sendbuffer,'\0',strlen(sendbuffer));
+            fprintf(stderr, "%s", sendbuffer);
+            sendbuffer[0] = OPCODE;
+            sendbuffer[1] = STATUS_CODE_SUCCESS;
+            // nastavíme payload length
+            sendbuffer[2] = strlen(result);
+
+            strcat(sendbuffer+3,result);
+
+            int bytes_tx = sendto(Socket, sendbuffer, strlen(sendbuffer), 0, addr, addr_size);
+            if (bytes_tx < 0) 
+            {
+                perror("ERROR: sendto");
+                send_err(mode, flags);
+            } 
+            memset(sendbuffer,'\0',strlen(sendbuffer));
+        }
+    }
+}
+
 void listen()
 {
     int max_waiting_connections = 1;
