@@ -1,4 +1,4 @@
-/* 
+//* 
  * Projekt 2: Server na komunikaciu s klientom pre VUT FIT predmet IPK
  * Autor: Juraj Nikola Mašlej, xmasle01@vubr.cz
  * 2022/2023
@@ -16,6 +16,28 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <climits>
+#include <regex.h>
+
+#define BUFFER_SIZE 1024
+#define OPCODE 0x01
+#define STATUS_CODE_SUCCESS 0x01
+#define STATUS_CODE_ERROR 0x00
+#define SEND_BYTE_ARR 4
+
+int comm_socket;
+const char* hello = "HELLO\n";
+const char* bye = "BYE\n";
+char buffer[BUFFER_SIZE];
+char recvbuffer[BUFFER_SIZE];
+char sendbuffer[BUFFER_SIZE];
+char* host,* mode;
+int port;
+int flags = 0;
+bool err = false;
+int Socket;
+struct sockaddr_in client_addr;
+socklen_t addr_size = sizeof(client_addr);
 
 void send_err(char* mode, int flags)
 {
@@ -329,11 +351,6 @@ void RecvSendTCP(int welcome_socket, char* mode, int flags,struct sockaddr_in co
 {
 
     perror("want to do something");
-    /* struct sockaddr_in comm_addr;
-    comm_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    comm_addr.sin_family = AF_INET;
-
-    comm_addr.sin_port = htons(port); */
 
     socklen_t comm_addr_size = sizeof(comm_addr);
     perror("socket je ");
@@ -364,11 +381,27 @@ void RecvSendTCP(int welcome_socket, char* mode, int flags,struct sockaddr_in co
 
 int main(int argc, char * argv[])
 {
-    check_args(int argc, char * argv[]);
-    char* host,* mode;
-    int port;
+    check_args(argc, argv);
+
     host = argv[2];
     port = atoi(argv[4]);
     mode = argv[6];
+
+    Socket = create_socket(mode, flags);
+
+    struct sockaddr_in server_addr ;
+    socklen_t server_addr_len=sizeof(server_addr);
+
+    binding(port, Socket, server_addr);
+    
+    if(!strcmp(mode, "tcp"))
+    {
+        listenTCP(Socket);
+        RecvSendTCP(Socket, mode, flags, server_addr);
+    }
+    if(!strcmp(mode, "udp"))
+    {
+        RecvSendUDP(Socket, mode, flags);
+    }
 
 }
