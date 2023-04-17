@@ -313,15 +313,54 @@ void RecvSendUDP(int Socket, char* mode, int flags)
     }
 }
 
-void listen()
+void listenTCP(int welcome_socket)
 {
     int max_waiting_connections = 1;
     if (listen(welcome_socket, max_waiting_connections) < 0)
     {
         perror("ERROR: listen");
         exit(EXIT_FAILURE);
+        send_err(mode, flags);
+        printf("im deaf");
     }
 }
+
+void RecvSendTCP(int welcome_socket, char* mode, int flags,struct sockaddr_in comm_addr)
+{
+
+    perror("want to do something");
+    /* struct sockaddr_in comm_addr;
+    comm_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    comm_addr.sin_family = AF_INET;
+
+    comm_addr.sin_port = htons(port); */
+
+    socklen_t comm_addr_size = sizeof(comm_addr);
+    perror("socket je ");
+    while(1)
+    {
+        //signal(SIGINT, controlC);
+
+        comm_socket = accept(welcome_socket, (struct sockaddr *) &comm_addr, &comm_addr_size);
+        perror("socket je ");
+        if (comm_socket < 0)
+        {
+            perror("ERROR: accept");
+            send_err(mode, flags);
+        }
+        if (fork() == 0) // Create a child process to handle the client connection
+        {
+            printf("sending");
+            close(welcome_socket);
+            handle_client(comm_socket, mode, flags);
+            exit(0);
+        }
+        else
+        {
+            close(comm_socket);
+        }
+    }
+}   
 
 int main(int argc, char * argv[])
 {
