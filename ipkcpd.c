@@ -17,6 +17,80 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+bool valid_expr(char* expr)
+{
+    int brcnt = 0;
+    for(int i = 0; i< strlen(expr); i++)
+    {
+        if(expr[i] == '(')
+        {
+            brcnt++;
+        }
+        else if(expr[i] == ')')
+        {
+            brcnt--;
+        }
+    }
+    if(brcnt != 0)
+    {
+        return false;
+    }
+
+
+    return true;
+}
+
+int calculate (char* expr)
+{
+    if(!valid_expr(expr) )
+    {
+        send_err(mode, flags);
+    }
+
+    char op = expr[1]; // the operator is always the second character
+    int operand1, operand2;
+    char *rest;
+    operand1 = strtol(expr + 3, &rest, 10); // convert the first operand to an integer
+    if (*rest == '(') { // if there is a subexpression, evaluate it recursively
+        int subresult = calculate(rest);
+        switch (op) {
+            case '+':
+                operand1 += subresult;
+                break;
+            case '-':
+                operand1 -= subresult;
+                break;
+            case '*':
+                operand1 *= subresult;
+                break;
+            case '/':
+                operand1 /= subresult;
+                break;
+        }
+        rest++; // move past the closing parenthesis
+    }
+    while (*rest != '\0' && *rest != ')') { // loop over remaining operands
+        rest++; // move past the space
+        operand2 = strtol(rest, &rest, 10); // convert the operand to an integer
+        switch (op) {
+            case '+':
+                operand1 += operand2;
+                break;
+            case '-':
+                operand1 -= operand2;
+                break;
+            case '*':
+                operand1 *= operand2;
+                break;
+            case '/':
+                operand1 /= operand2;
+                break;
+        }
+    }
+    return operand1;
+}
+
+
 bool check_args(int argc, const char * argv[])
 {
     if(argc == 7) // checking if arguments are correct
